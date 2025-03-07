@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"library-management/models"
 	"log"
 
@@ -9,16 +8,19 @@ import (
 	"gorm.io/gorm"
 )
 
+// DB holds the database connection instance
 var DB *gorm.DB
 
-func ConnectDatabase() {
+// ConnectDatabase initializes the database connection
+func ConnectDatabase() (*gorm.DB, error) {
 	dsn := "host=localhost user=postgres password=postgres dbname=library_management sslmode=disable"
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		log.Fatalf("Failed to connect to database: %v", err)
+		return nil, err
 	}
 
-	// Auto-Migrate tables
+	// Auto-migrate database tables
 	err = database.AutoMigrate(
 		&models.Library{},
 		&models.User{},
@@ -27,11 +29,12 @@ func ConnectDatabase() {
 		&models.IssueRegistry{},
 		&models.UserLibrary{},
 	)
-
 	if err != nil {
-		log.Fatal("Failed to migrate database:", err)
+		log.Fatalf("Failed to migrate database: %v", err)
+		return nil, err
 	}
 
 	DB = database
-	fmt.Println("Database connected and migrated successfully!")
+	log.Println("Database connected and migrated successfully!")
+	return DB, nil
 }

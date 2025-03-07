@@ -10,5 +10,5 @@ type User struct {
 	Contact  string
 	Role     string    `gorm:"type:varchar(50);check:role IN ('owner', 'admin', 'user')"`
 	Password string    `gorm:"not null"`
-	Library  []Library `gorm:"many2many:user_libraries;"`
+	Library  []Library `gorm:"many2many:UserLibrary;"`
 }

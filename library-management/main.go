@@ -4,13 +4,22 @@ import (
 	"library-management/config"
 	"library-management/routes"
 
-	"github.com/gin-gonic/gin"
+	"log"
 )
 
 func main() {
-	r := gin.Default()       // Create a new Gin router
-	config.ConnectDatabase() // Initialize the database
+	// Initialize the database and handle errors
+	db, err := config.ConnectDatabase()
+	if err != nil {
+		log.Fatalf("Database initialization failed: %v", err)
+	}
 
-	r = routes.SetupRouter() // Assign the configured router
-	r.Run(":8080")           // Start the server
+	// Set up the Gin router with the database instance
+	r := routes.SetupRouter(db)
+
+	// Start the server on port 8080
+	log.Println("Server is running on port 8080...")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

@@ -4,9 +4,9 @@ import "gorm.io/gorm"
 
 type RequestEvent struct {
 	gorm.Model
-	ID     uint   `gorm:"primaryKey"`
-	BookID string `gorm:"not null" json:"isbn"`
-
+	ID           uint   `gorm:"primaryKey"`
+	BookID       string `gorm:"not null" json:"isbn"`
+	LibraryID    uint   `gorm:"not null" json:"libraryid"`
 	ReaderID     uint   `gorm:"not null"` // Reference to User (Reader)
 	RequestDate  int64  `gorm:"not null"`
 	ApprovalDate *int64 `gorm:"default:null"` // Default -1 (Not yet approved)
