@@ -1,0 +1,10 @@
+.owner-portal-container {
+    display: flex;
+  }
+  
+  .content {
+    margin-left: 200px; /* Ensure content is pushed right to make room for the sidebar */
+    padding: 20px;
+    flex-grow: 1; /* Content area should take up the remaining space */
+  }
+  

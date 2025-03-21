@@ -3,13 +3,12 @@ package main
 import (
 	"library-management/config"
 	"library-management/routes"
-
 	"log"
 )
 
 func main() {
 	// Initialize the database and handle errors
-	db, err := config.ConnectDatabase()
+	db, err := config.ConnectDatabase(false)
 	if err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}

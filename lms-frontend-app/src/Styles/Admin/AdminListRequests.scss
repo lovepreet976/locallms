@@ -1,0 +1,166 @@
+.admin-requests-container {
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding-top: 100px; /* Ensures content starts below the navbar */
+}
+
+/* Sidebar should always be positioned properly */
+@media (min-width: 769px) {
+  .admin-requests-container {
+    justify-content: flex-start; /* Ensures content stays properly aligned */
+    padding-left: 270px; /* Prevents sidebar from overlapping */
+  }
+}
+
+/* Content Section */
+.content {
+  flex: 1;
+  max-width: 900px;
+  background-color: #f8f9fa;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  text-align: center;
+  margin-left: auto; /* Centers content towards the left side */
+  flex-grow: 1; /* Allows content to adjust dynamically */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Keeps content centered */
+}
+
+.content:hover {
+  transform: scale(1.01);
+}
+
+h2 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+  transition: color 0.3s ease;
+}
+
+/* ✅ Requests Grid */
+.requests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* ✅ Request Card */
+.request-card {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+/* Status Colors */
+.status {
+  font-weight: bold;
+
+  &.pending {
+    color: orange;
+  }
+  &.approved {
+    color: green;
+  }
+  &.disapproved {
+    color: red;
+  }
+}
+
+/* ✅ Buttons */
+.buttons {
+  margin-top: 10px;
+}
+
+.approve-btn,
+.disapprove-btn,
+.issue-book-btn {
+  margin: 5px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.approve-btn {
+  background: green;
+  color: white;
+}
+
+.disapprove-btn {
+  background: red;
+  color: white;
+}
+
+.issue-book-btn {
+  background: blue;
+  color: white;
+}
+
+/* ✅ Remove scrollbars while keeping content visible */
+.admin-requests-container,
+.content {
+  overflow: hidden;
+}
+
+/* ✅ Responsive Adjustments */
+@media (max-width: 1024px) {
+  .content {
+    width: 95%;
+    padding: 25px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-requests-container {
+    padding-top: 90px; /* Adjusted for smaller screens */
+  }
+
+  .content {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .requests-grid {
+    grid-template-columns: 1fr; /* Single column layout for smaller screens */
+  }
+
+  .request-card {
+    padding: 12px;
+  }
+
+  .approve-btn,
+  .disapprove-btn,
+  .issue-book-btn {
+    padding: 10px 15px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-requests-container {
+    padding-top: 80px; /* Adjusted for mobile screens */
+  }
+
+  .content {
+    padding: 15px;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  .approve-btn,
+  .disapprove-btn,
+  .issue-book-btn {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+}

@@ -23,7 +23,7 @@ func AddBook(db *gorm.DB) gin.HandlerFunc {
 
 		// Bind JSON input
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON input"})
 			return
 		}
 
@@ -43,6 +43,7 @@ func AddBook(db *gorm.DB) gin.HandlerFunc {
 		// Check if book already exists in the library
 		var existingBook models.Book
 		if err := db.Where("isbn = ? AND library_id = ?", input.ISBN, input.LibraryID).First(&existingBook).Error; err == nil {
+			// Book already exists, update the total copies
 			existingBook.TotalCopies += input.TotalCopies
 			existingBook.AvailableCopies += input.TotalCopies
 
@@ -55,7 +56,7 @@ func AddBook(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// New book → Insert into DB
+		// New book Insert into DB
 		input.AvailableCopies = input.TotalCopies
 		if err := db.Create(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not add book"})
@@ -123,7 +124,6 @@ func UpdateBook(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// RemoveBook removes a book - Only Admin
 func RemoveBook(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		isbn := c.Param("isbn")
@@ -131,6 +131,7 @@ func RemoveBook(db *gorm.DB) gin.HandlerFunc {
 			LibraryID uint `json:"libraryid"`
 		}
 
+		// ✅ Ensure user is an authenticated admin
 		userID, exists := c.Get("userID")
 		userRole, roleExists := c.Get("userRole")
 		if !exists || !roleExists || userRole != "admin" {
@@ -138,23 +139,33 @@ func RemoveBook(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// ✅ Validate JSON input
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
+		// ✅ Ensure the admin is assigned to this library
 		var admin models.UserLibrary
 		if err := db.Where("user_id = ? AND library_id = ?", userID, input.LibraryID).First(&admin).Error; err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "You are not assigned as an admin for this library"})
 			return
 		}
 
+		// ✅ Find the book in the specified library
 		var book models.Book
 		if err := db.Where("isbn = ? AND library_id = ?", isbn, input.LibraryID).First(&book).Error; err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Book not found in the specified library"})
 			return
 		}
 
+		// ✅ Prevent removal if no available copies
+		if book.AvailableCopies == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot remove book. All copies are currently issued."})
+			return
+		}
+
+		// ✅ If there are multiple copies, decrement instead of deleting
 		if book.TotalCopies > 1 {
 			book.TotalCopies--
 			book.AvailableCopies--
@@ -163,12 +174,14 @@ func RemoveBook(db *gorm.DB) gin.HandlerFunc {
 				return
 			}
 			c.JSON(http.StatusOK, gin.H{"message": "Book copies decremented", "book": book})
-		} else {
-			if err := db.Delete(&book).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove book"})
-				return
-			}
-			c.JSON(http.StatusOK, gin.H{"message": "Book removed from inventory"})
+			return
 		}
+
+		// ✅ Delete only if it's the last copy and available (not issued)
+		if err := db.Delete(&book).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove book"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Book removed from inventory"})
 	}
 }

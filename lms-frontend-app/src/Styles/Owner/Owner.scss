@@ -1,0 +1,164 @@
+.owner-container {
+  display: flex;
+  align-items: flex-start;
+  min-height: 75vh;
+  padding-top: 100px; /* Ensures content starts below the navbar */
+}
+
+/* Sidebar should always be positioned properly */
+@media (min-width: 769px) {
+  .owner-container {
+    justify-content: flex-start; /* Ensures content stays properly aligned */
+    padding-left: 270px; /* Prevents sidebar from overlapping */
+  }
+}
+
+/* Content section */
+.content {
+  max-width: 600px;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  transition: transform 0.2s ease-in-out;
+  margin-left: auto; /* Centers content towards the left side */
+  flex-grow: 1; /* Allows content to adjust dynamically */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Keeps content centered */
+}
+
+.content:hover {
+  transform: scale(1.01);
+}
+
+h2 {
+  font-size: 26px;
+  font-weight: bold;
+  color: #1b053f;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Form Styling */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1; /* Makes form expand to fit available space */
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 15px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  transition: border-color 0.3s ease;
+}
+
+input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+button {
+  padding: 12px 18px;
+  background-color: #2a054d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #1b053f;
+}
+
+/* Success and Error Messages */
+.success-message {
+  color: green;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.error-message {
+  color: red;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .owner-container {
+    flex-direction: column;
+    padding: 15px;
+    padding-top: 80px; /* Keeps spacing below navbar */
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .register-form {
+    justify-content: center;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  button {
+    padding: 10px 15px;
+  }
+}
+
+/* Library List Grid */
+.library-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* Library Card Styles */
+.library-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.library-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.library-card h3 {
+  font-size: 20px;
+  color: #333;
+}
+
+.library-card p {
+  color: #666;
+  font-size: 14px;
+  margin: 5px 0;
+}

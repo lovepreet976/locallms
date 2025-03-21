@@ -1,0 +1,64 @@
+/* Sidebar container */
+.sidebar {
+    position: fixed;
+    top: 90px;  /* Adjust to start just below the navbar */
+    left: 0;
+    width: 250px;
+    height: calc(100vh - 60px); /* Full height minus the navbar height */
+    background-color: #333;
+    color: white;
+    padding-top: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 5;
+  }
+  
+  /* Title styling inside the sidebar */
+  .sidebar-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.5rem;
+    color: #fff;
+  }
+  
+  /* Styling for the list of links */
+  .sidebar-links {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .sidebar-links li {
+    margin-bottom: 20px;
+  }
+  
+  .sidebar-link {
+    color: white;
+    text-decoration: none;
+    font-size: 1.1rem;
+    padding: 10px 15px;
+    display: block;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Hover effect for links */
+  .sidebar-link:hover {
+    background-color: #4CAF50;
+  }
+  
+  .sidebar-link:active {
+    background-color: #45a049;
+  }
+  
+  
+  .logout-btn {
+    background-color: #e74c3c;  // A red color for logout
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    width: 100%;
+  }
+  
+  .logout-btn:hover {
+    background-color: #c0392b;  // Darker red when hovered
+  }

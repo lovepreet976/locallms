@@ -33,7 +33,7 @@ func AuthMiddleware(requiredRole string) gin.HandlerFunc {
 		// Validate JWT using utils.ValidateJWT
 		userID, userRole, err := utils.ValidateJWT(tokenString)
 		if err != nil {
-			fmt.Println("JWT Validation Error:", err) // Log the error
+			fmt.Println("JWT Validation Error:", err) 
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return

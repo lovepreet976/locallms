@@ -3,21 +3,31 @@ package routes
 import (
 	controllers "library-management/controllers"
 	"library-management/middleware"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 func SetupRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
-	// Public routes (No authentication required)
+	// Public routes (No authentication needed)
 	auth := r.Group("/auth")
 	{
 		auth.POST("/login", controllers.Login(db))
 	}
 
-	// Protected API routes (Require authentication)
+	// Protected API routes (needs authentication)
 	api := r.Group("/api")
 	{
 		r.GET("/libraries", controllers.ListLibraries(db))
@@ -36,7 +46,6 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		// Admin-Only Routes
 		adminRoutes := api.Group("", middleware.AuthMiddleware("admin"))
 		{
-			adminRoutes.POST("/user", controllers.RegisterUser(db))
 
 			// Book Management
 			adminRoutes.POST("/book", controllers.AddBook(db))            // Admin can add books
@@ -52,6 +61,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			adminRoutes.POST("/issue/book/:isbn", controllers.IssueBookToUser(db)) // Admin can issue books to a reader
 		}
 
+		api.POST("/user", controllers.RegisterUser(db))
 		// User-Only Routes
 		userRoutes := api.Group("", middleware.AuthMiddleware("user"))
 		{
@@ -60,6 +70,8 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 			// Request a Book
 			userRoutes.POST("/issue", controllers.RequestIssue(db)) // Users can request book issues
+
+			userRoutes.GET("/issue/status", controllers.StatusIssue(db))
 		}
 	}
 

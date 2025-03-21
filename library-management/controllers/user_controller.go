@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// SearchBooks allows users to search for books in their registered libraries
 func SearchBooks(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get("userID")
@@ -68,20 +67,27 @@ func SearchBooks(db *gorm.DB) gin.HandlerFunc {
 				"library_id":       book.LibraryID,
 			}
 
+			// ✅ Fix: Check if the book is unavailable (no copies left)
 			if book.AvailableCopies == 0 {
-				var nextAvailableDate time.Time
 				var issue models.IssueRegistry
 
-				if err := db.Where("isbn = ? AND return_date IS NULL", book.ISBN).
+				// ✅ Fix: Ensure we correctly check outstanding issues
+				if err := db.Where("isbn = ? AND return_date = 0", book.ISBN).
 					Order("expected_return_date ASC").
 					First(&issue).Error; err == nil {
-					nextAvailableDate = time.Unix(issue.ExpectedReturnDate, 0)
-					bookData["next_available_date"] = nextAvailableDate.Format("2006-01-02 15:04:05")
+					// ✅ If found, set the next available date
+					nextAvailableDate := time.Unix(issue.ExpectedReturnDate, 0)
+					bookData["next_available_date"] = nextAvailableDate.Format("2006-01-02")
 				} else {
+					// ✅ If no ongoing issue, set to unknown
 					bookData["next_available_date"] = "Unknown"
 				}
+			} else {
+				// ✅ If available, do not show the next available date
+				bookData["next_available_date"] = "Available"
 			}
 
+			// Append the book data to the response
 			response = append(response, bookData)
 		}
 
@@ -89,7 +95,6 @@ func SearchBooks(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// RequestIssue allows users to request books from admins
 func RequestIssue(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input struct {
@@ -148,5 +153,48 @@ func RequestIssue(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusCreated, gin.H{"message": "Issue request submitted", "request": request})
+	}
+}
+
+func StatusIssue(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get user ID from the token
+		userID, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized request"})
+			return
+		}
+
+		// Retrieve all requests for this user (sorted by request date, newest first)
+		var requests []models.RequestEvent
+		if err := db.Where("reader_id = ?", userID).
+			Order("request_date DESC"). // ✅ Sorts by latest request first
+			Find(&requests).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not retrieve request statuses"})
+			return
+		}
+
+		// If no requests exist, return an empty list
+		if len(requests) == 0 {
+			c.JSON(http.StatusOK, gin.H{"requests": []gin.H{}}) // ✅ Return empty array instead of error
+			return
+		}
+
+		// Convert requests into a response format
+		var formattedRequests []gin.H
+		for _, request := range requests {
+			formattedRequests = append(formattedRequests, gin.H{
+				"request_id":    request.ID,
+				"book_id":       request.BookID,
+				"library_id":    request.LibraryID,
+				"reader_id":     request.ReaderID,
+				"request_date":  request.RequestDate,
+				"approval_date": request.ApprovalDate,
+				"status":        request.Status, // ✅ Shows actual status (Approved, Pending, or Disapproved)
+			})
+		}
+
+		// Return all requests for this user
+		c.JSON(http.StatusOK, gin.H{"requests": formattedRequests})
 	}
 }

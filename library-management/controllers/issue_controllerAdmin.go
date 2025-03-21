@@ -1,4 +1,3 @@
-// 🔍 Manage Issue Requests
 package controllers
 
 import (
@@ -6,9 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // ListIssueRequests retrieves all issue requests for admin's libraries
@@ -32,7 +30,8 @@ func ListIssueRequests(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		var requests []models.RequestEvent
-		if err := db.Joins("JOIN books ON request_events.book_id = books.isbn").
+		if err := db.
+			Joins("JOIN books ON request_events.book_id = books.isbn").
 			Where("books.library_id IN (?)", adminLibraryIDs).
 			Find(&requests).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not fetch issue requests"})
@@ -46,8 +45,9 @@ func ListIssueRequests(db *gorm.DB) gin.HandlerFunc {
 				"book_id":       request.BookID,
 				"user_id":       request.ReaderID,
 				"request_type":  request.RequestType,
-				"request_date":  formatUnixTime(&request.RequestDate),
-				"approval_date": formatUnixTime(request.ApprovalDate),
+				"status":        request.Status,
+				"request_date":  request.RequestDate,
+				"approval_date": request.ApprovalDate,
 				"approver_id":   request.ApproverID,
 			}
 		}
@@ -72,25 +72,8 @@ func ApproveIssue(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var book models.Book
-		if err := db.Where("isbn = ?", request.BookID).First(&book).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Book not found"})
-			return
-		}
-
-		var count int64
-		if err := db.Table("user_libraries").Where("user_id = ? AND library_id = ?", adminID, book.LibraryID).Count(&count).Error; err != nil || count == 0 {
-			c.JSON(http.StatusForbidden, gin.H{"error": "You can only approve requests for books in your assigned library"})
-			return
-		}
-
-		if request.ApprovalDate != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Request is already approved"})
-			return
-		}
-
-		if book.AvailableCopies == 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "No available copies to issue"})
+		if request.Status != "Pending" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Request is already processed"})
 			return
 		}
 
@@ -98,13 +81,14 @@ func ApproveIssue(db *gorm.DB) gin.HandlerFunc {
 		request.ApprovalDate = &now
 		request.ApproverID = new(uint)
 		*request.ApproverID = adminID.(uint)
+		request.Status = "Approved"
 
 		if err := db.Save(&request).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not approve request"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Issue request approved"})
+		c.JSON(http.StatusOK, gin.H{"message": "Issue request approved", "status": request.Status})
 	}
 }
 
@@ -119,15 +103,23 @@ func DisapproveIssue(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := db.Delete(&request).Error; err != nil {
+		if request.Status != "Pending" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Request is already processed"})
+			return
+		}
+
+		request.Status = "Disapproved" // ✅ Update Status instead of deleting
+
+		if err := db.Save(&request).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not disapprove request"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Issue request disapproved successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Issue request disapproved", "status": request.Status})
 	}
 }
 
+// 📚 Issue a book to a user (Prevents re-issuing)
 func IssueBookToUser(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		isbn := c.Param("isbn")
@@ -158,6 +150,14 @@ func IssueBookToUser(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// ✅ Check if the book has already been issued
+		var existingIssue models.IssueRegistry
+		if err := db.Where("isbn = ? AND reader_id = ?", isbn, input.UserID).First(&existingIssue).Error; err == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "This book has already been issued to the user"})
+			return
+		}
+
+		// ✅ Reduce available copies
 		book.AvailableCopies--
 		db.Save(&book)
 
@@ -168,7 +168,7 @@ func IssueBookToUser(db *gorm.DB) gin.HandlerFunc {
 			ISBN:               isbn,
 			ReaderID:           input.UserID,
 			IssueApproverID:    adminID.(uint),
-			IssueStatus:        "issued",
+			IssueStatus:        "Issued",
 			IssueDate:          issueDate.Unix(),
 			ExpectedReturnDate: expectedReturnDate.Unix(),
 			ReturnDate:         0,
@@ -180,13 +180,11 @@ func IssueBookToUser(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// ✅ Update RequestEvent status to "Issued"
+		db.Model(&models.RequestEvent{}).
+			Where("book_id = ? AND reader_id = ?", isbn, input.UserID).
+			Update("status", "Issued")
+
 		c.JSON(http.StatusOK, gin.H{"message": "Book issued successfully"})
 	}
-}
-
-func formatUnixTime(timestamp *int64) string {
-	if timestamp == nil || *timestamp == 0 {
-		return "N/A"
-	}
-	return time.Unix(*timestamp, 0).Format("2006-01-02 15:04:05")
 }

@@ -1,0 +1,32 @@
+.owner-details-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  
+  .owner-details-container {
+    display: flex;
+    margin-top: 60px; /* Adjust based on navbar height */
+  }
+  
+  .owner-details-content {
+    margin-left: 240px; /* Sidebar width */
+    padding: 20px;
+    width: 100%;
+    background-color: #f9f9f9;
+  }
+  
+  .owner-details h2 {
+    color: #6a11cb;
+    margin-bottom: 20px;
+  }
+  
+  .owner-details p {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .owner-details strong {
+    color: #6a11cb;
+  }
+  
