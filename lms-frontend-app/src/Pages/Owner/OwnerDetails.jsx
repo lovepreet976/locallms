@@ -11,8 +11,7 @@ const OwnerDetails = () => {
   }, []);
 
   if (!ownerDetails) {
-    return <div>Loading...</div>;
-  }
+    return <div>No owner details available</div>;}
 
   return (
     <div className="owner-container">
